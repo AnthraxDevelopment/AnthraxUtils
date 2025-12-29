@@ -428,8 +428,8 @@ async def calculate_age(interaction: Interaction, day: int, month: int, year: in
         embed = Embed(
             title=f"Dinosaur's Age",
             description=f"""\
-Age in Weeks: `{age_in_weeks} week(s)`
-Age in in-game years: `{age_in_weeks // 4} year(s)`
+Age in Weeks: `{age_in_weeks}` week(s)
+Age in in-game years: `{age_in_weeks // 4}` year(s)
 Birth Season: `{birth_season_key.title() if birth_season_key else "Unknown"}` {seasons.get(birth_season_key, "")}
 Shutdown Offset Applied `{shutdown_offset}` days(s)
 """,
