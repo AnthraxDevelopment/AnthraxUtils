@@ -480,7 +480,7 @@ async def delete_shutdown_autocomplete(interaction: Interaction, current: str):
     ]
     return [
         app_commands.Choice(
-            name=s["description"],
+            name=f"{s["description"]} | {s["start_date"].strftime('%d-%m-%Y')} -> {s['end_date'].strftime('%d-%m-%Y')}",
             value=str(s["id"])
         )
         for s in filtered[:25]
