@@ -455,9 +455,9 @@ async def add_shutdown_command(interaction: Interaction):
     await log_command_usage("add-shutdown", interaction.user, "Success")
 
 
-@client.tree.command(name="delete-shutdown", description="Add a shutdown command to your dinosaur.")
+@client.tree.command(name="remove-shutdown", description="Add a shutdown command to your dinosaur.")
 @app_commands.describe(shutdown_id="The ID of the shutdown you want to remove")
-async def delete_shutdown_command(interaction: Interaction, shutdown_id: str):
+async def remove_shutdown_command(interaction: Interaction, shutdown_id: str):
     if not (interaction.user.guild_permissions.administrator or interaction.user.id == 767047725333086209):
         await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         await log_command_usage("delete-shutdown", interaction.user, "Not Allowed")
@@ -472,8 +472,8 @@ async def delete_shutdown_command(interaction: Interaction, shutdown_id: str):
     await log_command_usage("delete-shutdown", interaction.user, "Success")
 
 
-@delete_shutdown_command.autocomplete("shutdown_id")
-async def delete_shutdown_autocomplete(interaction: Interaction, current: str):
+@remove_shutdown_command.autocomplete("shutdown_id")
+async def remove_shutdown_autocomplete(interaction: Interaction, current: str):
     filtered = [
         s for s in db_client.shutdowns
         if s["description"].startswith(current)
