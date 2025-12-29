@@ -352,6 +352,23 @@ async def on_app_command_completion(interaction: Interaction, command: Command):
     await log_command_usage(command.name, interaction.user, "success")
 
 
+@client.tree.command(name="refresh-cache", description="Refreshes cache of DB")
+async def refresh_cache_command(interaction: Interaction):
+    if not (interaction.user.guild_permissions.administrator or interaction.user.id == 767047725333086209):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        await log_command_usage("add-shutdown", interaction.user, "Not Allowed")
+        return
+
+    db_client.refresh_cache()
+
+    embed = Embed(title="Cache Refreshed", color=discord.Color.green())
+    embed.add_field(name="Sticky Messages", value=len(db_client.stickied_messages), inline=False)
+    embed.add_field(name="Channels", value=len(db_client.listened_channels), inline=False)
+    embed.add_field(name="Shutdowns", value=len(db_client.shutdowns), inline=False)
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
 # TODO: Add back species to the description and function declaration once elder stuff is done
 @client.tree.command(name="calculate-age", description="Calculate the age of your dino, using their birthdate.")
 @app_commands.describe(day="The day the dinosaur was born", month="The month the dinosaur was born",
