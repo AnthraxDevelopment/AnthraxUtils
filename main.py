@@ -14,6 +14,7 @@ import asyncio
 from rich.console import Console
 from supabase import Client as SupabaseClient
 import requests
+
 load_dotenv()
 console = Console()
 
@@ -572,7 +573,9 @@ async def remove_sticky_autocomplete(interaction: Interaction, current: str) -> 
         for s in filtered[:25]
     ]
 
+
 import requests
+
 
 def get_dino_image_from_wikipedia(dino_name):
     # Search for the page
@@ -599,6 +602,7 @@ def get_dino_image_from_wikipedia(dino_name):
             return pages[page_id]['thumbnail']['source']
 
     return None
+
 
 @client.tree.command(name="dino-fact", description="Get a cool dino fact!")
 async def get_dino_fact(interaction: Interaction):
