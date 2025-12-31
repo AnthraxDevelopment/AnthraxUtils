@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 import asyncio
 from rich.console import Console
 from supabase import Client as SupabaseClient
-
+import requests
 load_dotenv()
 console = Console()
 
@@ -32,10 +32,9 @@ class AnthraxUtilsClient(Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:
-        # await self.tree.sync(guild=discord.Object(id=1374722200053088306))
-        await self.tree.sync()
-
-    console.print("Commands synced globally", style="green")
+        await self.tree.sync(guild=discord.Object(id=1374722200053088306))
+        # await self.tree.sync()
+        console.print("Commands synced globally", style="green")
 
     def load_configs(self):
         with open("config/lifespans.json", "r") as f:
@@ -507,6 +506,16 @@ async def remove_shutdown_autocomplete(interaction: Interaction, current: str):
 @client.tree.command(name="help", description="Lists all available commands")
 async def help_command(interaction: Interaction):
     await interaction.response.send_message(embed=help_embed(), ephemeral=True)
+    # bot_member = interaction.guild.get_member(client.user.id)
+    # perms = bot_member.guild_permissions
+    #
+    # perm_list = [perm for perm, value in perms if value]
+    #
+    # await interaction.response.send_message(
+    #     f"Bot has these permissions:\n{', '.join(perm_list)}",
+    #     ephemeral=True
+    # )
+
     await log_command_usage("help", interaction.user, "success")
 
 
@@ -562,6 +571,44 @@ async def remove_sticky_autocomplete(interaction: Interaction, current: str) -> 
             value=str(s["message_id"]))
         for s in filtered[:25]
     ]
+
+import requests
+
+def get_dino_image_from_wikipedia(dino_name):
+    # Search for the page
+    search_url = f"https://en.wikipedia.org/w/api.php"
+    search_params = {
+        "action": "query",
+        "format": "json",
+        "titles": dino_name,
+        "prop": "pageimages",
+        "pithumbsize": 500
+    }
+
+    headers = {
+        "User-Agent": "AnthraxUtilsBot/1.0 (Discord Bot; stemlertho@gmail.com)"
+    }
+
+    response = requests.get(search_url, params=search_params, headers=headers)
+    print(response.text)
+    data = response.json()
+
+    pages = data['query']['pages']
+    for page_id in pages:
+        if 'thumbnail' in pages[page_id]:
+            return pages[page_id]['thumbnail']['source']
+
+    return None
+
+@client.tree.command(name="dino-fact", description="Get a cool dino fact!")
+async def get_dino_fact(interaction: Interaction):
+    data = requests.get("https://dinosaur-facts-api.shultzlab.com/dinosaurs/random")
+    data = data.json()
+
+    embed = Embed(title=data["Name"], color=discord.Color.greyple(), description=data["Description"])
+    embed.set_image(url=get_dino_image_from_wikipedia(data["Name"]))
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 def help_embed():
