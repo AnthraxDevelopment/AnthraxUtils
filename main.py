@@ -30,6 +30,8 @@ class AnthraxUtilsClient(Client):
         self.lifespans = {}
         self.load_configs()
 
+        self.sticky_locks = {}
+
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:
@@ -331,20 +333,36 @@ async def on_message(message: Message):
     if message.author.id == client.user.id:
         return
 
-    if message.channel.id in db_client.listened_channels:
+    if message.channel.id not in db_client.listened_channels:
+        return
+
+    if message.channel.id not in client.sticky_locks:
+        client.sticky_locks[message.channel.id] = asyncio.Lock()
+
+    async with client.sticky_locks[message.channel.id]:
         for sticky in db_client.stickied_messages:
             if sticky["channel_id"] == message.channel.id:
-                # Getting old message and deleting it
-                old_message = await message.channel.fetch_message(sticky["message_id"])
-                old_id = old_message.id
-                await old_message.delete()
+                try:
+                    old_message = await message.channel.fetch_message(sticky["message_id"])
+                    old_id = old_message.id
+                    await old_message.delete()
 
-                # Sending new sticky message
-                new_message = await message.channel.send(sticky["content"] + "\n-# This is a sticky message.")
+                    new_message = await message.channel.send(sticky["content"] + "\n-# This is a sticky message.")
 
-                # Update DB and cache
-                db_client.refresh_sticky_message(old_id, new_message.id)
-                db_client.refresh_cache()
+                    db_client.refresh_sticky_message(old_id, new_message.id)
+                    db_client.refresh_cache()
+                except discord.errors.NotFound:
+                    console.print(
+                        f"[yellow]Sticky message {sticky['message_id']} not found in channel {message.channel.id}. Creating new one.[/yellow]"
+                    )
+                    new_message = await message.channel.send(sticky["content"] + "\n-# This is a sticky message.")
+                    db_client.refresh_sticky_message(sticky["message_id"], new_message.id)
+                    db_client.refresh_cache()
+                except Exception as e:
+                    console.print(
+                        f"[red]Error handling sticky message {sticky['message_id']} in channel {message.channel.id}: {e}[/red]"
+                    )
+                break
 
 
 @client.event
