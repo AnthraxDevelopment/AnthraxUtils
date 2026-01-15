@@ -303,29 +303,48 @@ async def log_command_usage(command_name: str, user: Member, status: Literal["su
         pass
 
 
-# == Add events and commands here! ==
 @client.event
 async def on_ready():
     console.print(f"Logged in as [green]{client.user.name}[/green]", justify="center")
+    console.print("Starting cache refresh thread.")
     await db_client.start_cache_refresh()
 
+    # Validate sticky messages on startup
+    console.print("Validating sticky messages...")
+    stale_stickies = []
+
     for sticky in db_client.stickied_messages:
+        channel = client.get_channel(sticky["channel_id"])
+
+        if channel is None:
+            console.print(
+                f"[yellow]Channel {sticky['channel_id']} not found. Marking sticky {sticky['message_id']} for removal.[/yellow]"
+            )
+            stale_stickies.append(sticky["message_id"])
+            continue
+
         try:
-            channel = client.get_channel(sticky["channel_id"])
-            message = await channel.fetch_message(sticky["message_id"])
-            old_id = message.id
-            await message.delete()
-
-            # Sending new sticky message
-            new_message = await channel.send(sticky["content"])
-
-            # Update DB and cache
-            db_client.refresh_sticky_message(old_id, new_message.id)
-            db_client.refresh_cache()
+            await channel.fetch_message(sticky["message_id"])
+            console.print(f"[green]✓[/green] Sticky message {sticky['message_id']} in channel {channel.name} is valid")
+        except discord.errors.NotFound:
+            console.print(
+                f"[yellow]Sticky message {sticky['message_id']} not found in channel {channel.name}. Marking for removal.[/yellow]"
+            )
+            stale_stickies.append(sticky["message_id"])
         except Exception as e:
             console.print(
-                f"Error in refreshing sticky message ID {sticky['message_id']} in channel ID {sticky['channel_id']}: {e}",
-                style="red")
+                f"[red]Error validating sticky message {sticky['message_id']}: {e}[/red]"
+            )
+
+    # Clean up stale stickies from database
+    if stale_stickies:
+        console.print(f"[yellow]Removing {len(stale_stickies)} stale sticky messages from database...[/yellow]")
+        for message_id in stale_stickies:
+            db_client.delete_sticky_message(message_id)
+        db_client.refresh_cache()
+        console.print(f"[green]✓[/green] Cleaned up stale sticky messages")
+    else:
+        console.print("[green]✓ All sticky messages are valid![/green]")
 
 
 @client.event
