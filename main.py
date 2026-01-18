@@ -414,8 +414,7 @@ async def calculate_age(interaction: Interaction, day: int, month: int, year: in
     try:
         print(f"Calculating age for {interaction.user.display_name}...")
 
-        birth_date = datetime.datetime.fromisoformat(
-            f"{year}-{"0" + str(month) if month < 10 else month}-{"0" + str(day) if day < 10 else day}")
+        birth_date = datetime.datetime.fromisoformat(f"{year:02d}-{month:02d}-{day:02d}")
         raw_difference = (datetime.date.today() - birth_date.date()).days
 
         # Check if birthdate is in the future
@@ -440,16 +439,18 @@ async def calculate_age(interaction: Interaction, day: int, month: int, year: in
         # Snagging the 20 messages
         try:
             closest_distance = None
-
+            search_date = birth_date = datetime.datetime.fromisoformat(f"{year:02d}-{month:02d}-{day + 1:02d}")
             async for message in client.get_guild(1374722200053088306).get_channel(1383845771232678071).history(
-                    limit=20, around=birth_date):
+                    limit=20, around=search_date):
                 # Only look at messages before the birthdate
-                if message.created_at.date() > birth_date.date():
+                if message.created_at.date() > search_date.date():
                     continue
 
                 for key in seasons.keys():
-                    if key in message.content.lower():
+                    # They put "hot springs" in the gowanda activity lol, now we just check the first importaint part
+                    if key in message.content.lower().split("gondwa")[0]:
                         distance = (birth_date.date() - message.created_at.date()).days
+                        print(f"{message.created_at.date()}: {key} | dist: {distance}")
 
                         if closest_distance is None or distance < closest_distance:
                             closest_distance = distance
