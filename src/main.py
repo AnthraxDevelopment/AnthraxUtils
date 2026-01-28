@@ -14,6 +14,7 @@ import requests
 
 from db_stuff import DBClient
 from ui_stuff import StickyModal, AddShutdownView
+import dino_info as di
 import rcon_stuff
 
 load_dotenv()
@@ -414,6 +415,45 @@ async def get_dino_fact(interaction: Interaction):
     embed.set_image(url=get_dino_image_from_wikipedia(data["Name"]))
 
     await interaction.response.send_message(embed=embed)
+
+
+# ----------------------
+# --- Log Dino Stuff ---
+# ----------------------
+@client.tree.command(name="log-dino",
+                     description="Saves a dinos information for future access. THIS IS NOT A REQUIRED COMMAND")
+async def log_dino(interaction: Interaction):
+    pass
+
+
+@client.tree.command(name="list-dinos", description="Shows all the dinos you have logged")
+async def list_dinos(interaction: Interaction):
+    pass
+
+
+@client.tree.command(name="edit-dino", description="Edit a dino's information")
+@app_commands.describe(dino="The dino you want to edit")
+async def edit_dino(interaction: Interaction, dino: str):
+    pass
+
+
+@client.tree.command(name="remove-dino", description="Removes a dino's information")
+@app_commands.describe(dino="The dino you want to edit")
+async def remove_dino(interaction: Interaction, dino: str):
+    pass
+
+
+@client.tree.command(name="get-dino", description="See a pretty embed of your dino")
+@app_commands.describe(dino="The dino you want to edit")
+async def get_dino(interaction: Interaction, dino: str):
+    pass
+
+
+@edit_dino.autocomplete("dino")
+@remove_dino.autocomplete("dino")
+@get_dino.autocomplete("dino")
+async def dino_autocomplete(interaction: Interaction, current: str):
+    return di.dino_autocomplete(interaction, current)
 
 
 # == Running the bot ==
